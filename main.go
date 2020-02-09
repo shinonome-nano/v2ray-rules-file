@@ -22,6 +22,7 @@ func v2rayRuleParser(rule string) (router.Domain_Type, string) {
 		"domain": router.Domain_Domain,
 		"plain":  router.Domain_Plain,
 		"regex":  router.Domain_Regex,
+		"regexp": router.Domain_Regex,
 		"full":   router.Domain_Full,
 	}
 	if strings.HasPrefix(rule, "#") {
@@ -47,10 +48,10 @@ func autoProxyRuleParser(rule string) (ruleType router.Domain_Type, domain strin
 	case strings.HasPrefix(rule, "|") && strings.HasSuffix(rule, "|"):
 		ruleType, domain = router.Domain_Full, strings.Trim(rule, "|")
 	case strings.HasPrefix(rule, "|"):
-		fmt.Printf("Unsupported rule (start anchor): %s. Regarded as plain rule.\n", rule)
+		fmt.Printf("Unsupported rule (start anchor): %s. Regarded as plaintext rule.\n", rule)
 		ruleType, domain = router.Domain_Plain, strings.TrimPrefix(rule, "|")
 	case strings.HasSuffix(rule, "|"):
-		fmt.Printf("Unsupported rule (end anchor): %s. Regarded as plain rule.\n", rule)
+		fmt.Printf("Unsupported rule (end anchor): %s. Regarded as plaintext rule.\n", rule)
 		ruleType, domain = router.Domain_Plain, strings.TrimSuffix(rule, "|")
 	default:
 		ruleType, domain = router.Domain_Plain, rule

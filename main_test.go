@@ -26,6 +26,7 @@ func TestV2rayRuleParser(t *testing.T) {
 		"domain:a.com": {Type: router.Domain_Domain, Value: "a.com"},
 		"plain:a.com":  {Type: router.Domain_Plain, Value: "a.com"},
 		"regex:.*":     {Type: router.Domain_Regex, Value: ".*"},
+		"regexp:.*":    {Type: router.Domain_Regex, Value: ".*"},
 		"full:a.com":   {Type: router.Domain_Full, Value: "a.com"},
 		":a.com":       {Type: router.Domain_Domain, Value: ":a.com"},
 		"#comment":     {Type: Domain_Comment, Value: ""},
