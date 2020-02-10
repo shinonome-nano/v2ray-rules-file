@@ -16,6 +16,8 @@ type parser func(string) (router.Domain_Type, string)
 
 const Domain_Comment = -1
 
+var urlRegex = regexp.MustCompile(`^(https?:\/\/)?([^:\/\s]+)(\/.*)?$`)
+
 func v2rayRuleParser(rule string) (router.Domain_Type, string) {
 	const defaultType = router.Domain_Domain
 	prefixes := map[string]router.Domain_Type{
@@ -39,20 +41,24 @@ func v2rayRuleParser(rule string) (router.Domain_Type, string) {
 	}
 }
 
+func getHost(url string) string {
+	return urlRegex.FindStringSubmatch(url)[2]
+}
+
 func autoProxyRuleParser(rule string) (ruleType router.Domain_Type, domain string) {
 	switch {
 	case strings.HasPrefix(rule, "[") || strings.HasPrefix(rule, "!") || strings.HasPrefix(rule, "@@"):
 		ruleType, domain = Domain_Comment, ""
 	case strings.HasPrefix(rule, "||"):
-		ruleType, domain = router.Domain_Domain, strings.TrimPrefix(rule, "||")
+		ruleType, domain = router.Domain_Domain, getHost(strings.TrimPrefix(rule, "||"))
 	case strings.HasPrefix(rule, "|") && strings.HasSuffix(rule, "|"):
-		ruleType, domain = router.Domain_Full, strings.Trim(rule, "|")
+		ruleType, domain = router.Domain_Full, getHost(strings.Trim(rule, "|"))
 	case strings.HasPrefix(rule, "|"):
 		fmt.Printf("Unsupported rule (start anchor): %s. Regarded as plaintext rule.\n", rule)
-		ruleType, domain = router.Domain_Plain, strings.TrimPrefix(rule, "|")
+		ruleType, domain = router.Domain_Plain, getHost(strings.TrimPrefix(rule, "|"))
 	case strings.HasSuffix(rule, "|"):
 		fmt.Printf("Unsupported rule (end anchor): %s. Regarded as plaintext rule.\n", rule)
-		ruleType, domain = router.Domain_Plain, strings.TrimSuffix(rule, "|")
+		ruleType, domain = router.Domain_Plain, getHost(strings.TrimSuffix(rule, "|"))
 	default:
 		ruleType, domain = router.Domain_Plain, rule
 	}
@@ -75,6 +81,7 @@ func getSitesList(fileName string, parser parser) (list []*router.Domain) {
 	}
 
 	rules := strings.Split(string(d), "\n")
+	ruleMap := make(map[string]bool)
 
 	for _, rule := range rules {
 		rule := strings.TrimSpace(rule)
@@ -85,10 +92,13 @@ func getSitesList(fileName string, parser parser) (list []*router.Domain) {
 		if t == Domain_Comment {
 			continue
 		}
-		list = append(list, &router.Domain{
-			Type:  t,
-			Value: val,
-		})
+		if _, ok := ruleMap[t.String()+val]; !ok {
+			list = append(list, &router.Domain{
+				Type:  t,
+				Value: val,
+			})
+			ruleMap[t.String()+val] = true
+		}
 	}
 	return
 }
